@@ -1,5 +1,7 @@
 HELP.md
-target/
+
+### Maven build output (every module's target/ folder) ###
+**/target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
