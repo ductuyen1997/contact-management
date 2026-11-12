@@ -1,0 +1,4 @@
+com/example/contact/ContactServiceApplicationTests.class
+com/example/contact/controller/ContactRestControllerTest.class
+com/example/contact/service/ContactCsvExporterTest.class
+com/example/contact/service/ContactServiceImplTest.class

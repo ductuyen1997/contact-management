@@ -1,0 +1,21 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    # "native" serves files from the classpath / filesystem instead of a Git repository.
+    # In production you would typically point spring.cloud.config.server.git.uri at a config repo.
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: ${CONFIG_SEARCH_LOCATIONS:classpath:/config}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

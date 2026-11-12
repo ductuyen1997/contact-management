@@ -1,0 +1,131 @@
+name: contact-manager
+
+x-spring-service: &spring-service
+  build:
+    context: .
+  restart: unless-stopped
+  environment: &spring-env
+    CONFIG_SERVER_URL: http://config-server:8888
+    EUREKA_URL: http://discovery-server:8761/eureka
+    DB_HOST: postgres
+    RABBITMQ_HOST: rabbitmq
+
+services:
+  # ---------------------------------------------------------------- infrastructure
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # management UI: http://localhost:15672 (guest / guest)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+  config-server:
+    <<: *spring-service
+    build:
+      context: .
+      args:
+        MODULE: config-server
+    environment: {}
+    ports:
+      - "8888:8888"
+    healthcheck: &health
+      test: ["CMD-SHELL", "curl -fs http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      start_period: 30s
+      retries: 10
+
+  discovery-server:
+    <<: *spring-service
+    build:
+      context: .
+      args:
+        MODULE: discovery-server
+    environment: {}
+    ports:
+      - "8761:8761"   # Eureka dashboard: http://localhost:8761
+    healthcheck:
+      <<: *health
+      test: ["CMD-SHELL", "curl -fs http://localhost:8761/actuator/health || exit 1"]
+
+  # ---------------------------------------------------------------- business services
+  contact-service:
+    <<: *spring-service
+    build:
+      context: .
+      args:
+        MODULE: contact-service
+    ports:
+      - "8091:8091"
+    depends_on:
+      config-server: { condition: service_healthy }
+      discovery-server: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      <<: *health
+      test: ["CMD-SHELL", "curl -fs http://localhost:8091/actuator/health || exit 1"]
+
+  activity-service:
+    <<: *spring-service
+    build:
+      context: .
+      args:
+        MODULE: activity-service
+    ports:
+      - "8092:8092"
+    depends_on:
+      config-server: { condition: service_healthy }
+      discovery-server: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      <<: *health
+      test: ["CMD-SHELL", "curl -fs http://localhost:8092/actuator/health || exit 1"]
+
+  api-gateway:
+    <<: *spring-service
+    build:
+      context: .
+      args:
+        MODULE: api-gateway
+    environment:
+      <<: *spring-env
+    ports:
+      - "8090:8090"
+    depends_on:
+      config-server: { condition: service_healthy }
+      discovery-server: { condition: service_healthy }
+    healthcheck:
+      <<: *health
+      test: ["CMD-SHELL", "curl -fs http://localhost:8090/actuator/health || exit 1"]
+
+  # ---------------------------------------------------------------- frontend
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"     # app: http://localhost:3000
+    depends_on:
+      api-gateway: { condition: service_healthy }
+
+volumes:
+  pgdata:

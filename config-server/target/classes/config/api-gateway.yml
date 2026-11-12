@@ -1,0 +1,31 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: contact-service
+              uri: lb://contact-service
+              predicates:
+                - Path=/api/v1/contacts/**,/api/v1/contacts
+            - id: activity-service
+              uri: lb://activity-service
+              predicates:
+                - Path=/api/v1/activities/**,/api/v1/activities
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: activityService
+                    fallbackUri: forward:/fallback/activities
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      activityService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+  timelimiter:
+    instances:
+      activityService:
+        timeout-duration: 3s

@@ -1,0 +1,27 @@
+import { Link, NavLink, Outlet } from 'react-router'
+
+export function Layout() {
+  return (
+    <>
+      <header className="topbar">
+        <div className="container topbar-inner">
+          <Link to="/contacts" className="brand">
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" fill="currentColor" />
+              <path d="M4 21c0-4 4-6 8-6s8 2 8 6" fill="currentColor" />
+            </svg>
+            Contact Manager
+          </Link>
+          <nav className="nav">
+            <NavLink to="/contacts" end>Contacts</NavLink>
+            <NavLink to="/activity">Activity</NavLink>
+          </nav>
+          <Link to="/contacts/new" className="btn btn-primary">+ New contact</Link>
+        </div>
+      </header>
+      <main className="container page">
+        <Outlet />
+      </main>
+    </>
+  )
+}
