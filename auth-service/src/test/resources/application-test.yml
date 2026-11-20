@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:auth;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+eureka:
+  client:
+    enabled: false
+
+security:
+  jwt:
+    secret: test-secret-test-secret-test-secret-0123456789
+    issuer: contact-manager-auth
+    ttl: 1h
+
+app:
+  admin:
+    username: admin
+    password: admin-password

@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet } from 'react-router'
+import { useAuth } from '../hooks/useAuth'
 
 export function Layout() {
+  const { user, isAdmin, logout } = useAuth()
   return (
     <>
       <header className="topbar">
@@ -16,7 +18,18 @@ export function Layout() {
             <NavLink to="/contacts" end>Contacts</NavLink>
             <NavLink to="/activity">Activity</NavLink>
           </nav>
-          <Link to="/contacts/new" className="btn btn-primary">+ New contact</Link>
+          <Link to="/contacts/new" className="btn btn-primary" aria-label="New contact">
+            +<span className="hide-sm"> New contact</span>
+          </Link>
+          {user && (
+            <div className="user-menu">
+              <span className="user-name" title={user.roles.join(', ')}>
+                {user.username}
+                {isAdmin && <span className="role-badge">Admin</span>}
+              </span>
+              <button className="btn btn-ghost" type="button" onClick={logout}>Sign out</button>
+            </div>
+          )}
         </div>
       </header>
       <main className="container page">

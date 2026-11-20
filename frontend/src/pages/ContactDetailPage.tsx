@@ -5,6 +5,7 @@ import { CategoryTag } from '../components/CategoryTag'
 import { FavoriteButton } from '../components/FavoriteButton'
 import { ErrorState, Spinner } from '../components/States'
 import { useContact, useDeleteContact } from '../hooks/useContacts'
+import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { ApiError } from '../api/http'
 import { headline } from '../lib/contact'
@@ -17,6 +18,7 @@ export function ContactDetailPage() {
   const remove = useDeleteContact()
   const navigate = useNavigate()
   const toast = useToast()
+  const { isAdmin } = useAuth()
 
   if (isPending) return <Spinner />
   if (error instanceof ApiError && error.status === 404) return <NotFoundPage />
@@ -68,7 +70,9 @@ export function ContactDetailPage() {
         </p>
 
         <div className="form-actions">
-          <button className="btn btn-danger push-left" onClick={onDelete} disabled={remove.isPending}>Delete</button>
+          {isAdmin && (
+            <button className="btn btn-danger push-left" onClick={onDelete} disabled={remove.isPending}>Delete</button>
+          )}
           <Link className="btn btn-primary" to={`/contacts/${contact.id}/edit`}>Edit contact</Link>
         </div>
       </article>

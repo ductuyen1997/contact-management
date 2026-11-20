@@ -8,7 +8,44 @@ x-spring-service: &spring-service
     CONFIG_SERVER_URL: http://config-server:8888
     EUREKA_URL: http://discovery-server:8761/eureka
     DB_HOST: postgres
-    RABBITMQ_HOST: rabbitmq
+    KAFKA_BOOTSTRAP_SERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092   # any one is enough to discover the rest
+    KAFKA_REPLICAS: 3
+
+# Kafka cluster: 3 nodes in KRaft mode (no ZooKeeper). Each node is both a broker (stores partitions)
+# and a controller (votes on cluster metadata), so the cluster keeps working with one node down.
+# Listeners on every node:
+#   kafka-N:29092    INTERNAL, for containers on the compose network
+#   localhost:909x   EXTERNAL, for services run from the IDE / terminal (9092, 9094, 9096)
+#   kafka-N:9093     CONTROLLER, KRaft quorum traffic between the nodes (not published)
+x-kafka-node: &kafka-node
+  image: apache/kafka:4.1.0
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:29092 > /dev/null 2>&1"]
+    interval: 10s
+    start_period: 30s
+    retries: 10
+
+# Settings shared by every node; each node adds its own id and listeners.
+x-kafka-env: &kafka-env
+  CLUSTER_ID: TZlaMwE7Rx20QWHjKII3zw         # must be identical on every node of the cluster
+  KAFKA_PROCESS_ROLES: broker,controller
+  KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+  KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+  # Every partition is copied to all 3 brokers; a write with acks=all needs 2 of them to confirm,
+  # so producers and consumers keep working while any one broker is down.
+  KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+  KAFKA_MIN_INSYNC_REPLICAS: 2
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  # Topics are created only by the services' NewTopic beans (with the right partition count), never
+  # implicitly by a consumer subscribing first, which would create a 1-partition topic.
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+  KAFKA_HEAP_OPTS: -Xmx512m -Xms512m         # default is 1 GB per broker; keep 3 brokers laptop-friendly
 
 services:
   # ---------------------------------------------------------------- infrastructure
@@ -27,15 +64,48 @@ services:
       interval: 5s
       retries: 10
 
-  rabbitmq:
-    image: rabbitmq:4-management-alpine
+  # Kafka nodes: shared settings come from x-kafka-node / x-kafka-env at the top of the file
+  kafka-1:
+    <<: *kafka-node
     ports:
-      - "5672:5672"
-      - "15672:15672"   # management UI: http://localhost:15672 (guest / guest)
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      retries: 10
+      - "9092:9092"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:29092,EXTERNAL://localhost:9092
+
+  kafka-2:
+    <<: *kafka-node
+    ports:
+      - "9094:9094"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:29092,EXTERNAL://localhost:9094
+
+  kafka-3:
+    <<: *kafka-node
+    ports:
+      - "9096:9096"
+    environment:
+      <<: *kafka-env
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9096,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:29092,EXTERNAL://localhost:9096
+
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.2.0
+    ports:
+      - "8080:8080"   # browse topics, messages, brokers and consumer groups: http://localhost:8080
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+    depends_on:
+      kafka-1: { condition: service_healthy }
+      kafka-2: { condition: service_healthy }
+      kafka-3: { condition: service_healthy }
 
   config-server:
     <<: *spring-service
@@ -78,7 +148,9 @@ services:
       config-server: { condition: service_healthy }
       discovery-server: { condition: service_healthy }
       postgres: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
+      kafka-1: { condition: service_healthy }
+      kafka-2: { condition: service_healthy }
+      kafka-3: { condition: service_healthy }
     healthcheck:
       <<: *health
       test: ["CMD-SHELL", "curl -fs http://localhost:8091/actuator/health || exit 1"]
@@ -95,10 +167,28 @@ services:
       config-server: { condition: service_healthy }
       discovery-server: { condition: service_healthy }
       postgres: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
+      kafka-1: { condition: service_healthy }
+      kafka-2: { condition: service_healthy }
+      kafka-3: { condition: service_healthy }
     healthcheck:
       <<: *health
       test: ["CMD-SHELL", "curl -fs http://localhost:8092/actuator/health || exit 1"]
+
+  auth-service:
+    <<: *spring-service
+    build:
+      context: .
+      args:
+        MODULE: auth-service
+    ports:
+      - "8093:8093"
+    depends_on:
+      config-server: { condition: service_healthy }
+      discovery-server: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+    healthcheck:
+      <<: *health
+      test: ["CMD-SHELL", "curl -fs http://localhost:8093/actuator/health || exit 1"]
 
   api-gateway:
     <<: *spring-service

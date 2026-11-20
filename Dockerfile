@@ -12,6 +12,7 @@ COPY discovery-server/pom.xml discovery-server/
 COPY api-gateway/pom.xml api-gateway/
 COPY contact-service/pom.xml contact-service/
 COPY activity-service/pom.xml activity-service/
+COPY auth-service/pom.xml auth-service/
 
 # 2) Sources
 COPY config-server/src config-server/src
@@ -19,6 +20,7 @@ COPY discovery-server/src discovery-server/src
 COPY api-gateway/src api-gateway/src
 COPY contact-service/src contact-service/src
 COPY activity-service/src activity-service/src
+COPY auth-service/src auth-service/src
 
 ARG MODULE
 RUN --mount=type=cache,target=/root/.m2 \

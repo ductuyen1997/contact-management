@@ -1,6 +1,7 @@
 package com.example.contact.dto;
 
 import com.example.contact.entity.Category;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Value;
 
@@ -17,6 +18,7 @@ public class ContactResponse {
     String email;
     String phone;
     String company;
+    @JsonIgnore
     String jobTitle;
     String address;
     String notes;

@@ -219,3 +219,21 @@ table.contacts { width: 100%; border-collapse: collapse; }
   .profile-head { flex-wrap: wrap; }
   .toolbar select, .toolbar .btn { flex: 1 1 auto; }
 }
+
+/* ---------------------------------------------------------------- auth */
+.user-menu { display: flex; align-items: center; gap: 10px; }
+.user-name { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.role-badge {
+  padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+  background: var(--primary-soft); color: var(--primary);
+}
+.auth-page { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.auth-card { width: 100%; max-width: 400px; padding: 28px 28px 20px; }
+.auth-brand { margin-bottom: 18px; }
+.auth-submit { width: 100%; justify-content: center; margin-top: 4px; }
+.auth-switch { text-align: center; margin: 16px 0 0; font-size: 0.9rem; }
+
+@media (max-width: 640px) {
+  .user-name { display: none; }
+  .auth-brand { font-size: 1.1rem; gap: 8px; }
+}

@@ -26,7 +26,7 @@ export function useContact(id: number) {
 }
 
 /**
- * Contact changes reach activity-service asynchronously via RabbitMQ, so the activity feed is
+ * Contact changes reach activity-service asynchronously via Kafka, so the activity feed is
  * refreshed once immediately and once more shortly after (eventual consistency).
  */
 function useInvalidateAfterChange() {

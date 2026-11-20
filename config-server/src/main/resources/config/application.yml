@@ -11,11 +11,8 @@ spring:
   mvc:
     problemdetails:
       enabled: true   # RFC 9457 error bodies for framework exceptions
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9094,localhost:9096}
   jpa:
     open-in-view: false
     hibernate:
@@ -32,8 +29,17 @@ management:
         enabled: true
 
 messaging:
-  contact-exchange: contact.events
+  contact-topic: contact.events
+  replicas: ${KAFKA_REPLICAS:3}   # copies of each partition; must not exceed the number of brokers
 
 logging:
   level:
     com.example: INFO
+
+# JWT settings shared by auth-service (signs tokens) and the gateway + services (validate them).
+# The default secret is for local development only: set JWT_SECRET (32+ characters) on every service in production.
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-me-contact-manager-jwt-secret}
+    issuer: contact-manager-auth
+    ttl: ${JWT_TTL:8h}

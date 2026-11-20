@@ -1,4 +1,4 @@
-import { request, toQueryString } from './http'
+import { downloadFile, request, toQueryString } from './http'
 import type { Contact, ContactFilter, ContactInput, ContactStats, Page } from './types'
 
 const BASE = '/api/v1/contacts'
@@ -14,4 +14,5 @@ export const contactsApi = {
   remove: (id: number) => request<void>(`${BASE}/${id}`, { method: 'DELETE' }),
   exportUrl: (filter: ContactFilter) =>
     `${BASE}/export` + toQueryString({ q: filter.q, category: filter.category, favorites: filter.favorites, sort: filter.sort }),
+  exportCsv: (filter: ContactFilter) => downloadFile(contactsApi.exportUrl(filter), 'contacts.csv'),
 }

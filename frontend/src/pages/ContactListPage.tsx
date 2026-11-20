@@ -8,7 +8,9 @@ import { FavoriteButton } from '../components/FavoriteButton'
 import { Pagination } from '../components/Pagination'
 import { EmptyState, ErrorState, Spinner } from '../components/States'
 import { useContactList, useContactStats } from '../hooks/useContacts'
+import { useAuth } from '../hooks/useAuth'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useToast } from '../hooks/useToast'
 import { CATEGORY_LABELS, SORT_LABELS } from '../lib/contact'
 
 const PAGE_SIZE = 10
@@ -47,6 +49,7 @@ export function ContactListPage() {
   const debouncedSearch = useDebouncedValue(search)
   const contacts = useContactList(filter)
   const stats = useContactStats()
+  const { isAdmin } = useAuth()
 
   useEffect(() => {
     if (debouncedSearch !== filter.q) setFilter({ q: debouncedSearch })
@@ -102,7 +105,7 @@ export function ContactListPage() {
           <input type="checkbox" checked={!!filter.favorites} onChange={(e) => setFilter({ favorites: e.target.checked })} />
           Favorites
         </label>
-        <a className="btn btn-ghost" href={contactsApi.exportUrl(filter)} download>Export CSV</a>
+        {isAdmin && <ExportButton filter={filter} />}
       </div>
 
       {contacts.isPending ? (
@@ -159,5 +162,26 @@ export function ContactListPage() {
         </>
       )}
     </>
+  )
+}
+
+/** CSV export is admin-only on the server; downloaded via fetch so the token is sent. */
+function ExportButton({ filter }: { filter: ContactFilter }) {
+  const toast = useToast()
+  const [busy, setBusy] = useState(false)
+  const onExport = async () => {
+    setBusy(true)
+    try {
+      await contactsApi.exportCsv(filter)
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : 'Export failed', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <button className="btn btn-ghost" type="button" onClick={onExport} disabled={busy}>
+      {busy ? 'Exporting…' : 'Export CSV'}
+    </button>
   )
 }

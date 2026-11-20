@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
+import { AuthProvider } from './components/AuthProvider'
 import { Layout } from './components/Layout'
+import { RequireAuth } from './components/RequireAuth'
 import { ToastProvider } from './components/ToastProvider'
 import { ApiError } from './api/http'
 import { ActivityPage } from './pages/ActivityPage'
+import { AuthPage } from './pages/AuthPage'
 import { ContactDetailPage } from './pages/ContactDetailPage'
 import { ContactFormPage } from './pages/ContactFormPage'
 import { ContactListPage } from './pages/ContactListPage'
@@ -20,8 +23,11 @@ const queryClient = new QueryClient({
 })
 
 const router = createBrowserRouter([
+  { path: 'login', element: <AuthPage mode="login" /> },
+  { path: 'register', element: <AuthPage mode="register" /> },
   {
-    element: <Layout />,
+    // Everything else requires a signed-in user
+    element: <RequireAuth><Layout /></RequireAuth>,
     children: [
       { index: true, element: <Navigate to="/contacts" replace /> },
       { path: 'contacts', element: <ContactListPage /> },
@@ -38,7 +44,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>
   )

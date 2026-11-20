@@ -3,7 +3,18 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/contacts_db
     username: ${CONTACT_DB_USER:contact_user}
     password: ${CONTACT_DB_PASSWORD:contact_pass}
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      acks: all                       # wait until the event is safely stored
+      properties:
+        spring.json.add.type.headers: false   # plain JSON contract, no Java class names in headers
+        max.block.ms: 5000                    # don't hang the HTTP request for 60s if Kafka is down
 
 app:
   page-size: 10
   seed-data: true
+
+messaging:
+  partitions: 3

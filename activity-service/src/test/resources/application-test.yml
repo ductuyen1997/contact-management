@@ -10,15 +10,21 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-  rabbitmq:
+  kafka:
+    admin:
+      auto-create: false      # no broker in tests: don't try to create topics
     listener:
-      simple:
-        auto-startup: false   # no broker in tests; the listener is exercised directly
+      auto-startup: false     # the listener is exercised directly
 
 eureka:
   client:
     enabled: false
 
 messaging:
-  contact-exchange: contact.events
-  activity-queue: activity.contact-events
+  contact-topic: contact.events
+  contact-dlt: contact.events.dlt
+
+security:
+  jwt:
+    secret: test-secret-test-secret-test-secret-0123456789
+    issuer: contact-manager-auth

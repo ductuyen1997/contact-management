@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@WithMockUser(roles = "USER")
 class ActivityControllerTest {
 
     @Autowired
@@ -55,6 +58,12 @@ class ActivityControllerTest {
         mvc.perform(get("/api/v1/activities").param("contactId", "2"))
                 .andExpect(jsonPath("$.page.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].contactName").value("Bob"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void requiresAuthentication() throws Exception {
+        mvc.perform(get("/api/v1/activities")).andExpect(status().isUnauthorized());
     }
 
     @Test

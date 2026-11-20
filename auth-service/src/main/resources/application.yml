@@ -1,0 +1,14 @@
+server:
+  port: 8093
+
+spring:
+  application:
+    name: auth-service
+  config:
+    # Database, JWT and registry settings come from the config server (config-server/src/main/resources/config)
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  cloud:
+    config:
+      # fail-fast overrides "optional:" when the client is enabled: without config the service would
+      # run with no datasource/secret, so exit and let Docker's restart policy retry. (Tests disable the client.)
+      fail-fast: true

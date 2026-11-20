@@ -4,7 +4,6 @@ import com.example.activity.dto.ContactEvent;
 import com.example.activity.repository.ActivityRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -42,11 +41,11 @@ class ContactEventListenerTest {
     }
 
     @Test
-    void rejectsUnknownEventTypeWithoutRequeue() {
+    void rejectsUnknownEventTypeAsNonRetryable() {
         ContactEvent event = new ContactEvent(UUID.randomUUID(), "EXPLODED", 1L, "X", Instant.now());
 
         assertThatThrownBy(() -> listener.onContactEvent(event))
-                .isInstanceOf(AmqpRejectAndDontRequeueException.class);
+                .isInstanceOf(IllegalArgumentException.class);   // not retried, sent to the DLT
         assertThat(repository.count()).isZero();
     }
 }
