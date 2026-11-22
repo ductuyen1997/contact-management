@@ -17,6 +17,8 @@ export interface Contact {
   notes: string | null
   category: Category
   favorite: boolean
+  /** Username of whoever added the contact; null for sample data and contacts added before this was tracked. */
+  createdBy: string | null
   createdAt: string
   updatedAt: string
 }

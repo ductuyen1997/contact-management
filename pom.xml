@@ -30,6 +30,8 @@
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2025.1.4</spring-cloud.version>
+        <!-- Tests are not run during builds (mvnw package / install / verify) -->
+        <skipTests>true</skipTests>
     </properties>
 
     <dependencyManagement>

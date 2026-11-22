@@ -42,6 +42,7 @@ public class ContactMapper {
                 .notes(contact.getNotes())
                 .category(contact.getCategory())
                 .favorite(contact.isFavorite())
+                .createdBy(contact.getCreatedBy())
                 .createdAt(contact.getCreatedAt())
                 .updatedAt(contact.getUpdatedAt())
                 .build();

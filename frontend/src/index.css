@@ -237,3 +237,16 @@ table.contacts { width: 100%; border-collapse: collapse; }
   .user-name { display: none; }
   .auth-brand { font-size: 1.1rem; gap: 8px; }
 }
+
+/* Text for screen readers only (e.g. a name for an icon-only column), invisible on screen */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

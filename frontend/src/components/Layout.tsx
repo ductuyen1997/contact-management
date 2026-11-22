@@ -1,6 +1,10 @@
 import { Link, NavLink, Outlet } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
 
+/**
+ * The frame around every signed-in page: the top bar (logo, menu, user) and the page area.
+ * `<Outlet />` is where React Router puts the current page (see the `children` routes in App.tsx).
+ */
 export function Layout() {
   const { user, isAdmin, logout } = useAuth()
   return (
@@ -14,6 +18,7 @@ export function Layout() {
             </svg>
             Contact Manager
           </Link>
+          {/* NavLink is a Link that gets the "active" class on the current page; `end` = exact match only */}
           <nav className="nav">
             <NavLink to="/contacts" end>Contacts</NavLink>
             <NavLink to="/activity">Activity</NavLink>

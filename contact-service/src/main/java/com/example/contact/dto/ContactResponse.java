@@ -24,6 +24,7 @@ public class ContactResponse {
     String notes;
     Category category;
     boolean favorite;
+    String createdBy;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

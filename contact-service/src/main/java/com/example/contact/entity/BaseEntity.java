@@ -3,6 +3,7 @@ package com.example.contact.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -23,6 +24,11 @@ public abstract class BaseEntity {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    /** Username of whoever created the row; filled in by JpaConfig#auditorAware and never changed afterwards. */
+    @CreatedBy
+    @Column(length = 50, updatable = false)
+    private String createdBy;
 
     @LastModifiedDate
     @Column(nullable = false)
